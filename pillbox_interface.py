@@ -3,6 +3,7 @@ import cv2
 import urllib.request
 import image_processing
 from bs4 import BeautifulSoup, SoupStrainer
+import easygui
 
 color_codes = {'blue': 'C48333' , 'white': 'C48325', 'black':'C48323', 
 	'brown': 'C48332', 'gray': 'C48324', 'green': 'C48329', 
@@ -14,17 +15,19 @@ size_code = '.00'
 desc = image_processing
 
 
-def get_image():
-	file_name = sys.argv[1]
-	img = cv2.imread(file_name)
+def get_image(filename):
+	# file_name = sys.argv[1]
+	# img = cv2.imread(file_name)
+	img = cv2.imread(filename)
 	return img
 
-def get_bg():
-	bg = sys.argv[2]
-	if bg == 'flash':
-		img = cv2.imread('bg-flash.jpg')
-	else:
-		img = cv2.imread('bg-noflash.jpg')
+def get_bg(filename):
+	# bg = sys.argv[2]
+	# if bg == 'flash':
+	# 	img = cv2.imread('bg-flash.jpg')
+	# else:
+	# 	img = cv2.imread('bg-noflash.jpg')
+	img = cv2.imread(filename)
 	return img
 
 def create_url(desc):
@@ -70,15 +73,38 @@ def eval_search_results(results):
 def eval_feature_results(desc):
 	return
 
-img = get_image()
-bg = get_bg()
+
+def on_open():
+	easygui.msgbox('Welcome to the Python Visual Pill Identifier. Please select your image background')
+	bg = easygui.fileopenbox()
+	print(bg)
+	easygui.msgbox('Please select the image of the pill you wish to identify')
+	img = easygui.fileopenbox()
+	print(img)
+	return bg, img
+
+def display_results(results):
+	text = 'Here are the pills matching your description: \n'
+	for r in results:
+		text += r + '\n'
+	easygui.textbox(text)
+
+
+bg_fn, img_fn = None, None
+while bg_fn == None or img_fn == None:
+	bg_fn, img_fn = on_open()
+
+print(img_fn)
+bg = get_bg(bg_fn)
+img = get_image(img_fn)
 desc = image_processing.get_pill_description(img, bg)
 query_url = create_url(desc)
 # print(query_url)
 
-response = urllib.request.urlopen(query_url)
-results = parse_response(response)
-print(results)
+# response = urllib.request.urlopen(query_url)
+# results = parse_response(response)
+# print(results)
+# display_results(results)
 #getimprint=&getingredient=&getshape=&getinactiveingredients=&getfirstcolor=&getauthor=&getsize=&getDEAschedule=&getscore=0&getlabelCode=&getprodCode=&getnorelabel=NULL&hide=1&submit=Search
 
 # Evaluation is a bit rigid: you might want to rank each feature separately (color, size, etc.) before going for the final full match performance.

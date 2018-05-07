@@ -6,19 +6,23 @@ from PIL import Image
 
 MAX_KERNEL = 5
 
-def get_image():
-	file_name = sys.argv[1]
-	img = cv2.imread(file_name)
-	return img
+# def get_image():
+# 	file_name = sys.argv[1]
+# 	img = cv2.imread(file_name)
+# 	return img
 
-def get_bg():
-	bg = sys.argv[2]
-	if bg == 'flash':
-		img = cv2.imread('bg-flash.jpg')
-	else:
-		img = cv2.imread('bg-noflash.jpg')
-	return img
+# def get_bg():
+# 	bg = sys.argv[2]
+# 	if bg == 'flash':
+# 		img = cv2.imread('bg-flash.jpg')
+# 	else:
+# 		img = cv2.imread('bg-noflash.jpg')
+# 	return img
 
+def orient_photos(img, bg):
+	if img.shape != bg.shape:
+		img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+	return img
 
 def subtract_background(img, ref):
 	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
@@ -49,7 +53,7 @@ def preprocess(img):
 		img = cv2.resize(img, (round(height * .6), round(width * .6)))
 		height = img.shape[0]
 		width = img.shape[1]
-	img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+	# img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
 	for i in range(1, MAX_KERNEL, 2):
 		preprocessed = cv2.GaussianBlur(img, (i, i), 0, 0)
 	return preprocessed
@@ -297,6 +301,10 @@ def get_pill_description(img, bg):
 	fg = preprocess(fg)
 	black_bg = blacken_bg(img, fg)
 
+	cv2.imshow('black_bg', black_bg)
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
+
 	desc = {}
 	desc['color'] = identify_color(img)
 	desc['shape'] = identify_shape(fg)
@@ -313,15 +321,14 @@ def get_pill_description(img, bg):
 # fg_only = preprocess(fg_only)
 # black_bg = blacken_bg(img, fg_only)
 
-# cv2.imshow('black bg', black_bg)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
 
-img = get_image()
-bg = get_bg()
+# img = get_image()
+# bg = get_bg()
+# img = orient_photos(img, bg)
 
-desc = get_pill_description(img, bg)
-print(desc)
+
+# desc = get_pill_description(img, bg)
+# print(desc)
 
 
 # print(identify_shape(fg_only))
