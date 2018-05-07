@@ -1,5 +1,5 @@
-import cv2
 import numpy as np
+import cv2
 import sys, os, math
 import pytesseract
 from PIL import Image
@@ -12,8 +12,13 @@ def get_image():
 	return img
 
 def get_bg():
-	img = cv2.imread('background.jpg')
+	bg = sys.argv[2]
+	if bg == 'flash':
+		img = cv2.imread('bg-flash.jpg')
+	else:
+		img = cv2.imread('bg-noflash.jpg')
 	return img
+
 
 def subtract_background(img, ref):
 	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
@@ -56,14 +61,19 @@ def get_roi(img, contour):
 	return roi
 
 def identify_color(img):
-	img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	img2 = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+	gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 	gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 	cv2.erode(gray, None, iterations=2)
 	cv2.dilate(gray, None, iterations=2)
 	__, contours, __ = cv2.findContours(gray.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	if len(contours) > 0:
 		cnt = max(contours, key=cv2.contourArea)
+
+		# cv2.drawContours(img, cnt, -1, (0, 255, 0), 3)
+		# cv2.imshow('contour', img)
+		# cv2.waitKey(0)
+
 		x, y, w, h = cv2.boundingRect(cnt)
 
 		avg_hue = 0
@@ -73,7 +83,7 @@ def identify_color(img):
 
 		for i in range(x, x + w, 3):
 			for j in range(y, y + h, 3):
-				hsv = img[j][i]
+				hsv = img2[j][i]
 				if hsv[2] != 0: #not black
 					avg_hue += hsv[0]
 					count += 1
@@ -83,6 +93,10 @@ def identify_color(img):
 		avg_hue = avg_hue / count
 		avg_sat = avg_sat / count
 		avg_val = avg_val / count
+
+		# print('hue: ' + str(avg_hue))
+		# print('sat: ' + str(avg_sat))
+		# print('val: ' + str(avg_val))
 
 		if avg_sat < 50:
 			return 'white'
@@ -98,16 +112,16 @@ def identify_color(img):
 				return 'orange'
 			elif avg_hue >= 20 and avg_hue <= 40:
 				return 'yellow'
-			elif avg_hue >= 50 and avg_hue <= 70:
+			elif avg_hue >= 50 and avg_hue < 80:
 				return 'green'
-			elif avg_hue >= 110 and avg_hue <= 135:
+			elif avg_hue >= 80 and avg_hue <= 135:
 				return 'blue'
 			elif avg_hue > 135 and avg_hue < 160:
 				return 'purple'
 			else: 
 				return ''
 	else:
-		return ''
+		return 'unknown'
 
 # Round / Oval / Capsule
 # Takes BW image
@@ -151,16 +165,18 @@ def identify_shape(img):
 					return 'oval'
 	return ''
 
-# https://github.com/madmaze/pytesseract
+# Takes BW image
 def read_imprint(img):
-	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-	# gray = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=5)
-	# gray = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=5)
-	gray = cv2.Laplacian(gray, cv2.CV_64F, ksize=5)
+	# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	gray = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)
+	gray = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)
+	gray = cv2.Laplacian(img, cv2.CV_64F, ksize=3)
+	# dst = cv2.Canny(img, 30, 255, None, 3)
+
+	gray = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)[1]
 
 	cv2.imwrite('gray.png', gray)
 	imprint = pytesseract.image_to_string(Image.open('gray.png'))
-	# os.remove('gray.png')
 	return imprint
 
 # mark is 1.5 cm - should get pixel width
@@ -172,7 +188,6 @@ def get_measure_mark(img):
 	__, contours, __ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	if len(contours) > 0:
 		contours = np.extract(condition(contours), contours)
-		print(len(contours))
 		cnt = min(contours, key=cv2.contourArea)
 
 		# cv2.drawContours(img, cnt, -1, (0,255,0), 3)
@@ -218,8 +233,8 @@ def determine_size(img, fg_only):
 	measure_mark = get_measure_mark(img)
 
 	gray = cv2.threshold(fg_only, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-	dst = cv2.Canny(gray, 30, 255, None, 3)
-	roi = get_roi_from_edges(dst, img)
+	dst = cv2.Canny(gray, 30, 255, None, 7)
+	# roi = get_roi_from_edges(dst, img)
 
 	# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	# gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
@@ -229,12 +244,13 @@ def determine_size(img, fg_only):
 	if len(contours) > 0:
 		cnt = max(contours, key=cv2.contourArea)
 		# cv2.drawContours(img, cnt, -1, (0,255,0), 3)
-		cv2.imshow('contour', roi)
-		cv2.waitKey(0)
+		# cv2.imshow('contour', img)
+		# cv2.waitKey(0)
 		x, y, w, h = cv2.boundingRect(cnt)
-		ratio = w / measure_mark * 1.
+		length = max([w, h])
+		ratio = length / measure_mark * 1.
 		size = ratio * 1.5 * 10 #convert to mm
-		size = str(round(size)) + ' mm'
+		size = str(round(size))# + ' mm'
 		return size
 
 # Return number of scoremarks - short hough lines?? Not quite working oh well
@@ -275,25 +291,36 @@ def count_scoremarks(img):
 				return len(lines)
 	return 'unknown'
 
-def get_pill_description(img, fg):
+def get_pill_description(img, bg):
+	fg = subtract_background(img, bg)
+	img = preprocess(img)
+	fg = preprocess(fg)
+	black_bg = blacken_bg(img, fg)
+
 	desc = {}
 	desc['color'] = identify_color(img)
 	desc['shape'] = identify_shape(fg)
-	desc['imprint'] = read_imprint(img)
+	desc['imprint'] = read_imprint(fg)
 	desc['size'] = determine_size(img, fg)
 	# desc['scoremarks'] = count_scoremarks(fg)
 	return desc
 
 
+# img = get_image()
+# bg = get_bg()
+# fg_only = subtract_background(img, bg)
+# img = preprocess(img)
+# fg_only = preprocess(fg_only)
+# black_bg = blacken_bg(img, fg_only)
+
+# cv2.imshow('black bg', black_bg)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
 img = get_image()
 bg = get_bg()
-fg_only = subtract_background(img, bg)
-img = preprocess(img)
-fg_only = preprocess(fg_only)
-black_bg = blacken_bg(img, fg_only)
 
-
-desc = get_pill_description(black_bg, fg_only)
+desc = get_pill_description(img, bg)
 print(desc)
 
 
