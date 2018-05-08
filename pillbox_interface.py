@@ -39,7 +39,10 @@ def create_url(desc):
 	color = desc['color']
 	color = color_codes[color]
 	search_params += color  + '&getauthor=&getsize='
-	size = desc['size'] + size_code
+	size = desc['size']
+	if int(size) > 20:
+		size = '21'
+	size += size_code
 	search_params += size + '&getDEAschedule=&getscore=0&getlabelCode=&getprodCode=&getnorelabel=NULL&hide=1&submit=Search'
 	url += search_params
 	return url
@@ -77,10 +80,8 @@ def eval_feature_results(desc):
 def on_open():
 	easygui.msgbox('Welcome to the Python Visual Pill Identifier. Please select your image background')
 	bg = easygui.fileopenbox()
-	print(bg)
 	easygui.msgbox('Please select the image of the pill you wish to identify')
 	img = easygui.fileopenbox()
-	print(img)
 	return bg, img
 
 def display_results(results):
@@ -98,13 +99,14 @@ print(img_fn)
 bg = get_bg(bg_fn)
 img = get_image(img_fn)
 desc = image_processing.get_pill_description(img, bg)
+print(desc)
 query_url = create_url(desc)
 # print(query_url)
 
-# response = urllib.request.urlopen(query_url)
-# results = parse_response(response)
+response = urllib.request.urlopen(query_url)
+results = parse_response(response)
 # print(results)
-# display_results(results)
+display_results(results)
 #getimprint=&getingredient=&getshape=&getinactiveingredients=&getfirstcolor=&getauthor=&getsize=&getDEAschedule=&getscore=0&getlabelCode=&getprodCode=&getnorelabel=NULL&hide=1&submit=Search
 
 # Evaluation is a bit rigid: you might want to rank each feature separately (color, size, etc.) before going for the final full match performance.

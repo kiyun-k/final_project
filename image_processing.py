@@ -6,18 +6,14 @@ from PIL import Image
 
 MAX_KERNEL = 5
 
-# def get_image():
-# 	file_name = sys.argv[1]
-# 	img = cv2.imread(file_name)
-# 	return img
+def get_image():
+	file_name = sys.argv[1]
+	img = cv2.imread(file_name)
+	return img
 
-# def get_bg():
-# 	bg = sys.argv[2]
-# 	if bg == 'flash':
-# 		img = cv2.imread('bg-flash.jpg')
-# 	else:
-# 		img = cv2.imread('bg-noflash.jpg')
-# 	return img
+def get_bg():
+	img = cv2.imread('bg-flash.jpg')
+	return img
 
 def orient_photos(img, bg):
 	if img.shape != bg.shape:
@@ -102,9 +98,9 @@ def identify_color(img):
 		# print('sat: ' + str(avg_sat))
 		# print('val: ' + str(avg_val))
 
-		if avg_sat < 50:
+		if avg_sat < 70:
 			return 'white'
-		elif avg_sat < 50 and avg_val > 50:
+		elif avg_sat < 70 and avg_val > 70:
 			return 'gray'
 		else:
 			#http://i.stack.imgur.com/gCNJp.jpg
@@ -139,7 +135,7 @@ def identify_shape(img):
 		cnt = max(contours, key=cv2.contourArea)
 		x, y, w, h = cv2.boundingRect(cnt)
 
-		if w == h:
+		if abs(w - h) < min([w, h]) * .5:
 			return 'round'
 		else:
 			roi = get_roi(gray, cnt)
@@ -160,16 +156,19 @@ def identify_shape(img):
 					pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
 					pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
 					cv2.line(cdst, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
-				# cv2.imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst)
-				# cv2.waitKey(0)
-				# cv2.destroyAllWindows()
+				cv2.imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst)
+				cv2.waitKey(0)
+				cv2.destroyAllWindows()
 				if len(lines) > 2:
 					return 'capsule'
 				else:
 					return 'oval'
+			else:
+				return 'oval'
 	return ''
 
 # Takes BW image
+# REMOVE NON ALPHANUMERIC CHARACTERS!!
 def read_imprint(img):
 	# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	gray = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)
@@ -179,63 +178,59 @@ def read_imprint(img):
 
 	gray = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)[1]
 
+	gray = cv2.rotate(gray, cv2.ROTATE_90_CLOCKWISE)
+
+	cv2.imshow('gray', gray)
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
+
 	cv2.imwrite('gray.png', gray)
 	imprint = pytesseract.image_to_string(Image.open('gray.png'))
 	return imprint
 
+
+# grab from the background!!
 # mark is 1.5 cm - should get pixel width
 # 1103.3333 pixels -> 3310/3 - option to get rid of gold line
 def get_measure_mark(img):
+	img = cv2.cvtColor(img.copy(), cv2.COLOR_BGR2HSV)
+
+	lower_yellow = np.array([50, 100, 100])
+	upper_yellow = np.array([80, 255, 255])
+
+	mask = cv2.inRange(img, lower_yellow, upper_yellow)
+	res = cv2.bitwise_and(img, img, mask=mask)
+
 	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
 	__, contours, __ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	if len(contours) > 0:
 		contours = np.extract(condition(contours), contours)
+		print(len(contours))
 		cnt = min(contours, key=cv2.contourArea)
 
-		# cv2.drawContours(img, cnt, -1, (0,255,0), 3)
-		# cv2.imshow('contour', img)
-		# cv2.waitKey(0)
+		cv2.drawContours(img, cnt, -1, (0,255,0), 3)
+		cv2.imshow('mark', img)
+		cv2.waitKey(0)
+		cv2.destroyAllWindows()
 
 		x, y, w, h = cv2.boundingRect(cnt)
-		return h
+		return max([w, h])
 
 # Isolate biggest contours
 def condition(contours):
 	mat = []
 	for c in contours:
-		if cv2.contourArea(c) > 1500:
+		if cv2.contourArea(c) > 1000:
 			mat.append(True)
 		else:
 			mat.append(False)
 	return mat
 
-def get_roi_from_edges(edges, img):
-	count = 0
-	x = 0
-	y = 0
-	for row in edges:
-		if len(np.unique(row)) == 1:
-			x = count
-			break
-		count += 1
-
-	count = 0
-	tmp = edges.T
-	for row in edges:
-		if len(np.unique(row)) == 1:
-			y = count
-			break
-		count += 1
-
-	roi = img[y:, x:]
-	return roi
 
 # in mm 
-def determine_size(img, fg_only):
-	measure_mark = get_measure_mark(img)
-
+def determine_size(img, fg_only, measure_mark):
 	gray = cv2.threshold(fg_only, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 	dst = cv2.Canny(gray, 30, 255, None, 7)
 	# roi = get_roi_from_edges(dst, img)
@@ -247,10 +242,12 @@ def determine_size(img, fg_only):
 	__, contours, __ = cv2.findContours(dst, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	if len(contours) > 0:
 		cnt = max(contours, key=cv2.contourArea)
-		# cv2.drawContours(img, cnt, -1, (0,255,0), 3)
-		# cv2.imshow('contour', img)
-		# cv2.waitKey(0)
+		cv2.drawContours(img, cnt, -1, (0,255,0), 3)
+	
 		x, y, w, h = cv2.boundingRect(cnt)
+		cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+		cv2.imshow('contour', img)
+		cv2.waitKey(0)
 		length = max([w, h])
 		ratio = length / measure_mark * 1.
 		size = ratio * 1.5 * 10 #convert to mm
@@ -301,6 +298,8 @@ def get_pill_description(img, bg):
 	fg = preprocess(fg)
 	black_bg = blacken_bg(img, fg)
 
+	mark_len = get_measure_mark(bg)
+
 	cv2.imshow('black_bg', black_bg)
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
@@ -309,7 +308,7 @@ def get_pill_description(img, bg):
 	desc['color'] = identify_color(img)
 	desc['shape'] = identify_shape(fg)
 	desc['imprint'] = read_imprint(fg)
-	desc['size'] = determine_size(img, fg)
+	desc['size'] = determine_size(img, fg, mark_len)
 	# desc['scoremarks'] = count_scoremarks(fg)
 	return desc
 
@@ -322,14 +321,15 @@ def get_pill_description(img, bg):
 # black_bg = blacken_bg(img, fg_only)
 
 
-# img = get_image()
-# bg = get_bg()
-# img = orient_photos(img, bg)
+img = get_image()
+bg = get_bg()
+img = orient_photos(img, bg)
 
 
-# desc = get_pill_description(img, bg)
-# print(desc)
+desc = get_pill_description(img, bg)
+print(desc)
 
+# print(get_measure_mark(bg))
 
 # print(identify_shape(fg_only))
 # print(identify_color(img))
