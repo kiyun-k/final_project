@@ -41,8 +41,7 @@ def blacken_bg(img, fg):
 
 def preprocess(img):
 	preprocessed = img.copy()
-	# if bgr:
-	# 	preprocessed = cv2.cvtColor(preprocessed, cv2.COLOR_BGR2HSV)
+
 	height = img.shape[0]
 	width = img.shape[1]
 	while width > 1024 or height > 1024:
@@ -121,13 +120,12 @@ def identify_color(img):
 			else: 
 				return ''
 	else:
-		return 'unknown'
+		return ''
 
 # Round / Oval / Capsule
 # Takes BW image
 def identify_shape(img): 
 	gray = img
-	# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 	
 	__, contours, __ = cv2.findContours(gray.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -145,20 +143,20 @@ def identify_shape(img):
 			lines = cv2.HoughLines(dst, 1, np.pi / 180, 45)
 
 			if lines is not None:
-				cdst = cv2.cvtColor(dst, cv2.COLOR_GRAY2BGR)
-				for i in range(0, len(lines)):
-					rho = lines[i][0][0]
-					theta = lines[i][0][1]
-					a = math.cos(theta)
-					b = math.sin(theta)
-					x0 = a * rho
-					y0 = b * rho
-					pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
-					pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
-					cv2.line(cdst, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
-				cv2.imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst)
-				cv2.waitKey(0)
-				cv2.destroyAllWindows()
+				# cdst = cv2.cvtColor(dst, cv2.COLOR_GRAY2BGR)
+				# for i in range(0, len(lines)):
+				# 	rho = lines[i][0][0]
+				# 	theta = lines[i][0][1]
+				# 	a = math.cos(theta)
+				# 	b = math.sin(theta)
+				# 	x0 = a * rho
+				# 	y0 = b * rho
+				# 	pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+				# 	pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+				# 	cv2.line(cdst, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+				# cv2.imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst)
+				# cv2.waitKey(0)
+				# cv2.destroyAllWindows()
 				if len(lines) > 2:
 					return 'capsule'
 				else:
@@ -170,15 +168,19 @@ def identify_shape(img):
 # Takes BW image
 # REMOVE NON ALPHANUMERIC CHARACTERS!!
 def read_imprint(img):
-	# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	gray = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)
 	gray = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)
 	gray = cv2.Laplacian(img, cv2.CV_64F, ksize=3)
-	# dst = cv2.Canny(img, 30, 255, None, 3)
+
 
 	gray = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)[1]
+	gray = cv2.medianBlur(gray, 3)
 
-	gray = cv2.rotate(gray, cv2.ROTATE_90_CLOCKWISE)
+	__, contours, __ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	if len(contours) > 0:
+		cnt = max(contours, key=cv2.contourArea)
+		gray = get_roi(gray, cnt)
+	# gray = cv2.rotate(gray, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
 	cv2.imshow('gray', gray)
 	cv2.waitKey(0)
@@ -186,7 +188,7 @@ def read_imprint(img):
 
 	cv2.imwrite('gray.png', gray)
 	imprint = pytesseract.image_to_string(Image.open('gray.png'))
-	return imprint
+	return imprint.upper()
 
 
 # grab from the background!!
@@ -207,13 +209,12 @@ def get_measure_mark(img):
 	__, contours, __ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	if len(contours) > 0:
 		contours = np.extract(condition(contours), contours)
-		print(len(contours))
 		cnt = min(contours, key=cv2.contourArea)
 
-		cv2.drawContours(img, cnt, -1, (0,255,0), 3)
-		cv2.imshow('mark', img)
-		cv2.waitKey(0)
-		cv2.destroyAllWindows()
+		# cv2.drawContours(img, cnt, -1, (0,255,0), 3)
+		# cv2.imshow('mark', img)
+		# cv2.waitKey(0)
+		# cv2.destroyAllWindows()
 
 		x, y, w, h = cv2.boundingRect(cnt)
 		return max([w, h])
@@ -242,12 +243,12 @@ def determine_size(img, fg_only, measure_mark):
 	__, contours, __ = cv2.findContours(dst, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	if len(contours) > 0:
 		cnt = max(contours, key=cv2.contourArea)
-		cv2.drawContours(img, cnt, -1, (0,255,0), 3)
+		# cv2.drawContours(img, cnt, -1, (0,255,0), 3)
 	
 		x, y, w, h = cv2.boundingRect(cnt)
-		cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-		cv2.imshow('contour', img)
-		cv2.waitKey(0)
+		# cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+		# cv2.imshow('contour', img)
+		# cv2.waitKey(0)
 		length = max([w, h])
 		ratio = length / measure_mark * 1.
 		size = ratio * 1.5 * 10 #convert to mm
@@ -300,9 +301,9 @@ def get_pill_description(img, bg):
 
 	mark_len = get_measure_mark(bg)
 
-	cv2.imshow('black_bg', black_bg)
-	cv2.waitKey(0)
-	cv2.destroyAllWindows()
+	# cv2.imshow('black_bg', black_bg)
+	# cv2.waitKey(0)
+	# cv2.destroyAllWindows()
 
 	desc = {}
 	desc['color'] = identify_color(img)
