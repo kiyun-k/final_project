@@ -70,7 +70,7 @@ def parse_response(response):
 	return candidates
 
 
-def eval_search_results(results):
+def eval_search_results(results, img_fn):
 	pill_gold_standard = {'a1': 'Regular Strength Enteric coated aspirin - Aspirin 325 MG Delayed Release Oral Tablet',
 	 'b1': 'Zegerid OTC - Omeprazole 20 MG / Sodium Bicarbonate 1100 MG Oral Capsule [Zegerid Reformulated Aug 2006]'
 	 , 'c1': 'Ondansetron - Ondansetron 4 MG Oral Tablet', 'd1': 'Fludrocortisone Acetate - Fludrocortisone 0.1 MG Oral Tablet',
@@ -81,9 +81,16 @@ def eval_search_results(results):
 	 'i1':, 
 	'k1': 'Celecoxib - celecoxib 100 MG Oral Capsule', 'l1': 'Aleve - Naproxen sodium 220 MG Oral Tablet [Aleve]' ,
 	 'm1': 'Fluoxetine - Fluoxetine 40 MG Oral Capsule'}
-	return
 
-def eval_feature_results(desc):
+	 img_fn = img_fn[:-4]
+
+	 if pill_gold_standard[img_fn] is in results:
+	 	idx = results.index(pill_gold_standard[img_fn])
+	 	return "results contain correct label at result " + str(idx) + ' out of ' + str(len(results))
+
+	return "results do not contain correct label"
+
+def eval_feature_results(desc, img_fn):
 	pill_gold_standard = {'a1': {'color': 'orange', 'shape': 'round', 'size': '9', 'score': '1', 'imprint': '44 227' }, 
 	'b1': {'color': 'white', 'shape': 'capsule', 'size': '23', 'score': '1', 'imprint': 'ZEG 20' },
 	 'c1':  {'color': 'white', 'shape': 'oval', 'size': '10', 'score': '1', 'imprint': 'G1 4' } , 
@@ -97,8 +104,27 @@ def eval_feature_results(desc):
 	'k1': {'color': 'blue white', 'shape': 'capsule', 'size': '18', 'score': '1', 'imprint': 'TEVA 7165' }, 
 	'l1': {'color': 'blue', 'shape': 'oval', 'size': '12', 'score': '1', 'imprint': 'ALEVE' } , 
 	'm1': {'color': 'blue', 'shape': 'capsule', 'size': '19', 'score': '1', 'imprint': '40 A107' } }
- 
-	return
+
+	img_fn = img_fn[:-4]
+
+	total_fields = 4.
+
+	mismatched = 0
+
+	for key in desc:
+		if key == 'size':
+			if abs(int(desc[key]) - int(pill_gold_standard[img_fn][key])) > 2:
+				mismatched += 1
+		if key == 'imprint':
+			if pill_gold_standard[img_fn][key].find(desc[key]) == -1:
+				mismatched += 1
+		if key == 'color':
+			if pill_gold_standard[img_fn][key].find(desc[key]) == -1:
+				mismatched += 1
+		elif pill_gold_standard[img_fn][key] != desc[key]:
+			mismatched += 1
+
+	return mismatched / total_fields
 
 
 def on_open():
@@ -109,10 +135,7 @@ def on_open():
 	return bg, img
 
 def display_results(results):
-	text = 'Here are the pills matching your description: \n'
-	for r in results:
-		text += r + '\n'
-	easygui.textbox(text)
+	easygui.choicebox('Here are the results of your search', 'Search Results', results )
 
 
 bg_fn, img_fn = None, None
