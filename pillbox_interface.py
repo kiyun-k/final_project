@@ -48,7 +48,6 @@ def create_url(desc):
 	return url
 
 
-
 def parse_response(response):
 	candidates = []
 	result = response.read().decode('utf-8')
@@ -70,63 +69,6 @@ def parse_response(response):
 	return candidates
 
 
-def eval_search_results(results, img_fn):
-	pill_gold_standard = {'a1': 'Regular Strength Enteric coated aspirin - Aspirin 325 MG Delayed Release Oral Tablet',
-	 'b1': 'Zegerid OTC - Omeprazole 20 MG / Sodium Bicarbonate 1100 MG Oral Capsule [Zegerid Reformulated Aug 2006]'
-	 , 'c1': 'Ondansetron - Ondansetron 4 MG Oral Tablet', 'd1': 'Fludrocortisone Acetate - Fludrocortisone 0.1 MG Oral Tablet',
-	 'e1': 'Tizanidine hydrochloride - tizanidine 4 MG Oral Capsule' , 
-	 'f1': 'Sulfasalazine - Sulfasalazine 500 MG Oral Tablet' ,
-	 'g1': 'Mucinex DM - 12 HR Dextromethorphan Hydrobromide 60 MG / Guaifenesin 1200 MG Extended Release Oral Tablet [Mucinex DM]' , 
-	 'h1': ' Benzonatate - benzonatate 200 MG Oral Capsule', 'j1': 'Medique Diphen - Diphenhydramine Hydrochloride 25 MG Oral Tablet', 
-	 'i1':, 
-	'k1': 'Celecoxib - celecoxib 100 MG Oral Capsule', 'l1': 'Aleve - Naproxen sodium 220 MG Oral Tablet [Aleve]' ,
-	 'm1': 'Fluoxetine - Fluoxetine 40 MG Oral Capsule'}
-
-	 img_fn = img_fn[:-4]
-
-	 if pill_gold_standard[img_fn] is in results:
-	 	idx = results.index(pill_gold_standard[img_fn])
-	 	return "results contain correct label at result " + str(idx) + ' out of ' + str(len(results))
-
-	return "results do not contain correct label"
-
-def eval_feature_results(desc, img_fn):
-	pill_gold_standard = {'a1': {'color': 'orange', 'shape': 'round', 'size': '9', 'score': '1', 'imprint': '44 227' }, 
-	'b1': {'color': 'white', 'shape': 'capsule', 'size': '23', 'score': '1', 'imprint': 'ZEG 20' },
-	 'c1':  {'color': 'white', 'shape': 'oval', 'size': '10', 'score': '1', 'imprint': 'G1 4' } , 
-	 'd1': {'color': 'yellow', 'shape': 'oval', 'size': '9', 'score': '2', 'imprint': 'b 99 1 10' },
-	 'e1': {'color': 'blue white', 'shape': 'capsule', 'size': '16', 'score': '1', 'imprint': '4 MG' }, 
-	 'f1': {'color': 'yellow', 'shape': 'round', 'size': '14', 'score': '2', 'imprint': 'WATSON 796' } ,
-	 'g1': {'color': 'white', 'shape': 'oval', 'size': '22', 'score': '1', 'imprint': 'MUCINEX 1200' } , 
-	 'h1': {'color': 'yellow', 'shape': 'oval', 'size': '19', 'score': '1', 'imprint': '106' }, 
-	 'j1': {'color': 'pink', 'shape': 'oval', 'size': '11', 'score': '1', 'imprint': 'T 061' }, 
-	 'i1':, 
-	'k1': {'color': 'blue white', 'shape': 'capsule', 'size': '18', 'score': '1', 'imprint': 'TEVA 7165' }, 
-	'l1': {'color': 'blue', 'shape': 'oval', 'size': '12', 'score': '1', 'imprint': 'ALEVE' } , 
-	'm1': {'color': 'blue', 'shape': 'capsule', 'size': '19', 'score': '1', 'imprint': '40 A107' } }
-
-	img_fn = img_fn[:-4]
-
-	total_fields = 4.
-
-	mismatched = 0
-
-	for key in desc:
-		if key == 'size':
-			if abs(int(desc[key]) - int(pill_gold_standard[img_fn][key])) > 2:
-				mismatched += 1
-		if key == 'imprint':
-			if pill_gold_standard[img_fn][key].find(desc[key]) == -1:
-				mismatched += 1
-		if key == 'color':
-			if pill_gold_standard[img_fn][key].find(desc[key]) == -1:
-				mismatched += 1
-		elif pill_gold_standard[img_fn][key] != desc[key]:
-			mismatched += 1
-
-	return mismatched / total_fields
-
-
 def on_open():
 	easygui.msgbox('Welcome to the Python Visual Pill Identifier. Please select your image background')
 	bg = easygui.fileopenbox()
@@ -138,22 +80,23 @@ def display_results(results):
 	easygui.choicebox('Here are the results of your search', 'Search Results', results )
 
 
-bg_fn, img_fn = None, None
-while bg_fn == None or img_fn == None:
-	bg_fn, img_fn = on_open()
+# bg_fn, img_fn = None, None
+# while bg_fn == None or img_fn == None:
+# 	bg_fn, img_fn = on_open()
 
-print(img_fn)
-bg = get_bg(bg_fn)
-img = get_image(img_fn)
-desc = image_processing.get_pill_description(img, bg)
-print(desc)
-query_url = create_url(desc)
-# print(query_url)
+# bg = get_bg(bg_fn)
+# img = get_image(img_fn)
+# desc = image_processing.get_pill_description(img, bg)
+# print(desc)
+# query_url = create_url(desc)
+# # print(query_url)
 
-response = urllib.request.urlopen(query_url)
-results = parse_response(response)
-# print(results)
-display_results(results)
+# response = urllib.request.urlopen(query_url)
+# results = parse_response(response)
+# # print(results)
+# display_results(results)
+# eval_feature_results(desc, img_fn)
+# eval_search_results(results, img_fn)
 #getimprint=&getingredient=&getshape=&getinactiveingredients=&getfirstcolor=&getauthor=&getsize=&getDEAschedule=&getscore=0&getlabelCode=&getprodCode=&getnorelabel=NULL&hide=1&submit=Search
 
 # Evaluation is a bit rigid: you might want to rank each feature separately (color, size, etc.) before going for the final full match performance.

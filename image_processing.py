@@ -107,9 +107,9 @@ def identify_color(img):
 				if avg_val > 160 and avg_sat < 240: 
 					return 'pink'
 				return 'red'
-			elif avg_hue > 10 and avg_hue < 20:
+			elif avg_hue > 10 and avg_hue < 25:
 				return 'orange'
-			elif avg_hue >= 20 and avg_hue <= 40:
+			elif avg_hue >= 25 and avg_hue <= 45:
 				return 'yellow'
 			elif avg_hue >= 50 and avg_hue < 80:
 				return 'green'
@@ -182,9 +182,9 @@ def read_imprint(img):
 		gray = get_roi(gray, cnt)
 	# gray = cv2.rotate(gray, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-	cv2.imshow('gray', gray)
-	cv2.waitKey(0)
-	cv2.destroyAllWindows()
+	# cv2.imshow('gray', gray)
+	# cv2.waitKey(0)
+	# cv2.destroyAllWindows()
 
 	cv2.imwrite('gray.png', gray)
 	imprint = pytesseract.image_to_string(Image.open('gray.png'))
@@ -322,13 +322,13 @@ def get_pill_description(img, bg):
 # black_bg = blacken_bg(img, fg_only)
 
 
-img = get_image()
-bg = get_bg()
-img = orient_photos(img, bg)
+# img = get_image()
+# bg = get_bg()
+# img = orient_photos(img, bg)
 
 
-desc = get_pill_description(img, bg)
-print(desc)
+# desc = get_pill_description(img, bg)
+# print(desc)
 
 # print(get_measure_mark(bg))
 
