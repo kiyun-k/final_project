@@ -71,9 +71,33 @@ def parse_response(response):
 
 
 def eval_search_results(results):
+	pill_gold_standard = {'a1': 'Regular Strength Enteric coated aspirin - Aspirin 325 MG Delayed Release Oral Tablet',
+	 'b1': 'Zegerid OTC - Omeprazole 20 MG / Sodium Bicarbonate 1100 MG Oral Capsule [Zegerid Reformulated Aug 2006]'
+	 , 'c1': 'Ondansetron - Ondansetron 4 MG Oral Tablet', 'd1': 'Fludrocortisone Acetate - Fludrocortisone 0.1 MG Oral Tablet',
+	 'e1': 'Tizanidine hydrochloride - tizanidine 4 MG Oral Capsule' , 
+	 'f1': 'Sulfasalazine - Sulfasalazine 500 MG Oral Tablet' ,
+	 'g1': 'Mucinex DM - 12 HR Dextromethorphan Hydrobromide 60 MG / Guaifenesin 1200 MG Extended Release Oral Tablet [Mucinex DM]' , 
+	 'h1': ' Benzonatate - benzonatate 200 MG Oral Capsule', 'j1': 'Medique Diphen - Diphenhydramine Hydrochloride 25 MG Oral Tablet', 
+	 'i1':, 
+	'k1': 'Celecoxib - celecoxib 100 MG Oral Capsule', 'l1': 'Aleve - Naproxen sodium 220 MG Oral Tablet [Aleve]' ,
+	 'm1': 'Fluoxetine - Fluoxetine 40 MG Oral Capsule'}
 	return
 
 def eval_feature_results(desc):
+	pill_gold_standard = {'a1': {'color': 'orange', 'shape': 'round', 'size': '9', 'score': '1', 'imprint': '44 227' }, 
+	'b1': {'color': 'white', 'shape': 'capsule', 'size': '23', 'score': '1', 'imprint': 'ZEG 20' },
+	 'c1':  {'color': 'white', 'shape': 'oval', 'size': '10', 'score': '1', 'imprint': 'G1 4' } , 
+	 'd1': {'color': 'yellow', 'shape': 'oval', 'size': '9', 'score': '2', 'imprint': 'b 99 1 10' },
+	 'e1': {'color': 'blue white', 'shape': 'capsule', 'size': '16', 'score': '1', 'imprint': '4 MG' }, 
+	 'f1': {'color': 'yellow', 'shape': 'round', 'size': '14', 'score': '2', 'imprint': 'WATSON 796' } ,
+	 'g1': {'color': 'white', 'shape': 'oval', 'size': '22', 'score': '1', 'imprint': 'MUCINEX 1200' } , 
+	 'h1': {'color': 'yellow', 'shape': 'oval', 'size': '19', 'score': '1', 'imprint': '106' }, 
+	 'j1': {'color': 'pink', 'shape': 'oval', 'size': '11', 'score': '1', 'imprint': 'T 061' }, 
+	 'i1':, 
+	'k1': {'color': 'blue white', 'shape': 'capsule', 'size': '18', 'score': '1', 'imprint': 'TEVA 7165' }, 
+	'l1': {'color': 'blue', 'shape': 'oval', 'size': '12', 'score': '1', 'imprint': 'ALEVE' } , 
+	'm1': {'color': 'blue', 'shape': 'capsule', 'size': '19', 'score': '1', 'imprint': '40 A107' } }
+ 
 	return
 
 

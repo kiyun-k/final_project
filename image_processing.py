@@ -174,7 +174,7 @@ def read_imprint(img):
 
 
 	gray = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)[1]
-	gray = cv2.medianBlur(gray, 3)
+	# gray = cv2.medianBlur(gray, 3)
 
 	__, contours, __ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	if len(contours) > 0:
