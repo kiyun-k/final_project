@@ -80,21 +80,21 @@ def display_results(results):
 	easygui.choicebox('Here are the results of your search', 'Search Results', results )
 
 
-# bg_fn, img_fn = None, None
-# while bg_fn == None or img_fn == None:
-# 	bg_fn, img_fn = on_open()
+bg_fn, img_fn = None, None
+while bg_fn == None or img_fn == None:
+	bg_fn, img_fn = on_open()
 
-# bg = get_bg(bg_fn)
-# img = get_image(img_fn)
-# desc = image_processing.get_pill_description(img, bg)
-# print(desc)
-# query_url = create_url(desc)
-# # print(query_url)
+bg = get_bg(bg_fn)
+img = get_image(img_fn)
+desc = image_processing.get_pill_description(img, bg)
+print(desc)
+query_url = create_url(desc)
+# print(query_url)
 
-# response = urllib.request.urlopen(query_url)
-# results = parse_response(response)
-# # print(results)
-# display_results(results)
+response = urllib.request.urlopen(query_url)
+results = parse_response(response)
+# print(results)
+display_results(results)
 # eval_feature_results(desc, img_fn)
 # eval_search_results(results, img_fn)
 #getimprint=&getingredient=&getshape=&getinactiveingredients=&getfirstcolor=&getauthor=&getsize=&getDEAschedule=&getscore=0&getlabelCode=&getprodCode=&getnorelabel=NULL&hide=1&submit=Search
